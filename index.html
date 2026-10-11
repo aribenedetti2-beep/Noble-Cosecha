@@ -200,9 +200,25 @@
             <div style="display:flex; gap:10px;">
                 <div class="grupo-input" style="flex:2;"><label>Proveedor:</label><input type="text" id="compra-prov" class="input-dinero" placeholder="Opcional"></div>
                 <div class="grupo-input" style="flex:2;"><label>N° Factura / Remito:</label><input type="text" id="compra-factura" class="input-dinero" placeholder="Ej: F-0001-00012345"></div>
-                <div class="grupo-input" style="flex:1;"><label>Pago:</label><select id="compra-metodo" class="input-dinero"><option value="Efectivo">Efectivo</option><option value="MP">Transf/MP</option></select></div>
+                
+                <!-- NUEVO SELECTOR COMPRA MIXTA -->
+                <div class="grupo-input" style="flex:1;">
+                    <label>Pago:</label>
+                    <select id="compra-metodo" class="input-dinero" onchange="cambiarMetodoCompra()">
+                        <option value="Efectivo">Efectivo</option>
+                        <option value="MP">Transf/MP</option>
+                        <option value="Mixto">Combinado</option>
+                    </select>
+                </div>
             </div>
-            <div class="grupo-input"><label style="color:#673ab7;">Total Factura (Autocalculado / Editable):</label><div style="display:flex; align-items:center; gap:5px;"><span style="font-size:1.5rem; color:#673ab7;">$</span><input type="number" id="compra-total" class="input-dinero" style="width:100%; font-weight:bold; background:#f8fbff;" step="any"></div></div>
+
+            <div class="grupo-input"><label style="color:#673ab7;">Total Factura (Autocalculado / Editable):</label><div style="display:flex; align-items:center; gap:5px;"><span style="font-size:1.5rem; color:#673ab7;">$</span><input type="number" id="compra-total" class="input-dinero" style="width:100%; font-weight:bold; background:#f8fbff;" step="any" oninput="calcularMixtoCompra('efe')"></div></div>
+
+            <!-- NUEVO CONTENEDOR PARA COMPRA MIXTA -->
+            <div id="compra-mixto-inputs" style="display:none; gap:10px; margin-bottom: 15px;">
+                <div class="grupo-input" style="flex:1;"><label style="color:#34a853;">Monto Efectivo:</label><input type="number" id="compra-mixto-efe" class="input-dinero" oninput="calcularMixtoCompra('efe')"></div>
+                <div class="grupo-input" style="flex:1;"><label style="color:#009ee3;">Monto MP:</label><input type="number" id="compra-mixto-mp" class="input-dinero" oninput="calcularMixtoCompra('mp')"></div>
+            </div>
 
             <hr style="border: 0; border-top: 2px dashed #eee; margin: 15px 0;">
             <h3 style="margin: 0 0 10px 0; font-size:1.1rem;">1. Cargar Items al Stock</h3>
@@ -306,7 +322,7 @@
 
     <script>
         // ¡REEMPLAZAR CON TU URL REAL DE APPS SCRIPT!
-        const API_URL = 'https://script.google.com/macros/s/AKfycbx3RIlQm2A9G-L47hooStz0EXhF6GrjJbOKlpYsMgaVkZXlqhuKob0RaE29piTKD1_gqA/exec'; 
+        const API_URL = 'https://script.google.com/macros/s/AKfycbxB7bNvWaSwflwOPqo9i3qzMnGbQrRqFJsHjwhqfRuu6KrCGmPDb_6nt6lWVc91mPCByg/exec'; 
         
         let catalogoProductos = [], directorioClientes = [], ticketActual = [], subtotalTicket = 0, descuentoActual = 0, totalTicket = 0;
         let datosCierreActual = {}; 
@@ -523,12 +539,42 @@
             });
         }
 
-        /* ----- INGRESOS / COMPRAS ----- */
+        /* ----- INGRESOS / COMPRAS CON OPCIÓN MIXTA ----- */
+        function cambiarMetodoCompra() {
+            let metodo = document.getElementById('compra-metodo').value;
+            let inputsMixtos = document.getElementById('compra-mixto-inputs');
+            
+            if (metodo === 'Mixto') {
+                inputsMixtos.style.display = 'flex';
+            } else {
+                inputsMixtos.style.display = 'none';
+                document.getElementById('compra-mixto-efe').value = '';
+                document.getElementById('compra-mixto-mp').value = '';
+            }
+        }
+
+        function calcularMixtoCompra(origen) {
+            let total = parseFloat(document.getElementById('compra-total').value) || 0;
+            let e = parseFloat(document.getElementById('compra-mixto-efe').value) || 0;
+            let m = parseFloat(document.getElementById('compra-mixto-mp').value) || 0;
+            
+            if (origen === 'efe' && e <= total) {
+                document.getElementById('compra-mixto-mp').value = (total - e).toFixed(2);
+            } else if (origen === 'mp' && m <= total) {
+                document.getElementById('compra-mixto-efe').value = (total - m).toFixed(2);
+            }
+        }
+
         function abrirModalCompra() {
             itemsCompraTemporal = []; 
             document.getElementById('compra-prov').value = ''; 
             document.getElementById('compra-factura').value = '';
             document.getElementById('compra-total').value = '0.00';
+            
+            // Resetear el selector al abrir
+            document.getElementById('compra-metodo').value = 'Efectivo';
+            cambiarMetodoCompra();
+
             actualizarTablaCompras(); 
             document.getElementById('modal-compra').style.display = 'flex'; 
             document.getElementById('input-buscador-compra').focus();
@@ -568,8 +614,15 @@
         }
 
         function calcularPrecioVentaModal() {
-            let costo = parseFloat(document.getElementById('nuevo-prod-costo').value) || 0; let margen = parseFloat(document.getElementById('nuevo-prod-margen').value) || 0;
-            if(margen < 100) document.getElementById('nuevo-prod-venta').value = (costo / (1 - (margen / 100))).toFixed(2);
+            let costo = parseFloat(document.getElementById('nuevo-prod-costo').value) || 0; 
+            let margen = parseFloat(document.getElementById('nuevo-prod-margen').value) || 0;
+            if(margen < 100) {
+                // Se calcula el precio "crudo"
+                let precioCrudo = costo / (1 - (margen / 100));
+                // Se redondea a la centena más cercana (ej: 4285.71 pasa a 4300)
+                let precioRedondeado = Math.round(precioCrudo / 100) * 100;
+                document.getElementById('nuevo-prod-venta').value = precioRedondeado.toFixed(2);
+            }
         }
 
         function agregarNuevoProductoACompra() {
@@ -596,6 +649,11 @@
             });
 
             document.getElementById('compra-total').value = sumaTotalFactura.toFixed(2);
+            
+            // Si el método seleccionado es mixto, recalcular automático
+            if (document.getElementById('compra-metodo').value === 'Mixto') {
+                calcularMixtoCompra('efe');
+            }
         }
 
         function guardarCompra() {
@@ -607,12 +665,33 @@
             if(isNaN(total) || total < 0) return alert("Ingresá el monto de la factura.");
             if(itemsCompraTemporal.length === 0) return alert("No hay items cargados en la factura.");
 
+            // NUEVA LÓGICA DE PAGOS PARA COMPRA
+            let efe = 0, mp = 0;
+            if (metodo === 'Efectivo') {
+                efe = total;
+            } else if (metodo === 'MP') {
+                mp = total;
+            } else if (metodo === 'Mixto') {
+                efe = parseFloat(document.getElementById('compra-mixto-efe').value) || 0;
+                mp = parseFloat(document.getElementById('compra-mixto-mp').value) || 0;
+                if (Math.abs((efe + mp) - total) > 0.5) {
+                    return alert("Los montos combinados no suman el total de la factura.");
+                }
+            }
+
             setEstado('Procesando compra...', '#fff3e0', '#fbbc05');
             fetch(API_URL, {
                 method: 'POST', 
                 body: JSON.stringify({
                     accion: 'registrarCompra', 
-                    compra: { proveedor: prov, numeroFactura: factura, total: total, metodo: metodo, detalle: itemsCompraTemporal }
+                    compra: { 
+                        proveedor: prov, 
+                        numeroFactura: factura, 
+                        total: total, 
+                        metodo: metodo, 
+                        pagos: { efectivo: efe, mp: mp }, // Se envían los montos exactos
+                        detalle: itemsCompraTemporal 
+                    }
                 })
             }).then(r=>r.json()).then(d=>{
                 if(d.status==='success'){ cerrarModal('modal-compra'); setEstado('¡Stock y Costos actualizados!', '#e6f4ea', '#137333'); obtenerDatosDeSheets(); }

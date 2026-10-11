@@ -35,10 +35,10 @@
         th { background-color: #f1f3f4; padding: 10px 15px; text-align: left; font-size: 1.05rem; color: #5f6368; border-bottom: 2px solid #ddd; position: sticky; top: 0; z-index: 10; }
         td { padding: 10px 15px; font-size: 1.1rem; border-bottom: 1px solid #eee; vertical-align: middle; color: #202124; }
         
-        .col-cant { width: 110px; text-align: center; } 
-        .input-cant { width: 80px; font-size: 1.1rem; padding: 6px 4px; text-align: center; border: 2px solid #ccc; border-radius: 6px; font-weight: bold; color: #1a73e8; }
-        .col-precio { text-align: right; }
-        .col-quitar { width: 60px; text-align: center; }
+        .col-cant { width: 90px; text-align: center; } 
+        .input-cant { width: 70px; font-size: 1.1rem; padding: 6px 4px; text-align: center; border: 2px solid #ccc; border-radius: 6px; font-weight: bold; color: #1a73e8; }
+        .col-precio { text-align: right; width: 110px; }
+        .col-quitar { width: 50px; text-align: center; }
         .btn-quitar { background: #fee8e7; color: #d32f2f; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: bold; transition: 0.2s; }
         
         .panel-derecho { flex: 1; display: flex; flex-direction: column; background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; }
@@ -98,7 +98,6 @@
                 <button class="btn-header" onclick="abrirModalPagarDeuda()">💰 PAGO LIBRETA</button>
                 <button class="btn-header btn-compras" onclick="abrirModalCompra()">📦 COMPRAS / INGRESOS</button>
                 <button class="btn-header btn-retiro" onclick="abrirModalMovimiento()">💸 INGRESO / RETIRO</button>
-                <!-- BOTÓN NUEVO -->
                 <button class="btn-header" style="background: #e3f2fd; color: #1976d2; border: 2px solid #1976d2;" onclick="abrirModalDashboard()">📈 ESTADÍSTICAS</button>
                 <button class="btn-header btn-cierre" onclick="abrirModalCierre()">📊 CIERRE</button>
             </div>
@@ -109,10 +108,10 @@
     <!-- MAIN POS -->
     <div class="main-container">
         <div class="panel-izquierdo">
-            <div class="buscador-container"><input type="text" id="input-buscador" placeholder="Pase el código o busque..." autocomplete="off"></div>
+            <div class="buscador-container"><input type="text" id="input-buscador" placeholder="Pase el código o busque el nombre..." autocomplete="off"></div>
             <div class="ticket-container">
                 <table id="tabla-ticket">
-                    <thead><tr><th>Producto</th><th class="col-cant">Cant.</th><th class="col-precio">Precio</th><th class="col-precio">Subtotal</th><th class="col-quitar"></th></tr></thead>
+                    <thead><tr><th>Producto</th><th class="col-cant">Cant.</th><th class="col-precio">Precio Un.</th><th class="col-precio">Subtotal</th><th class="col-quitar"></th></tr></thead>
                     <tbody id="lista-ticket"></tbody>
                 </table>
             </div>
@@ -136,7 +135,13 @@
     </div>
 
     <!-- Modales de Venta -->
-    <div class="overlay" id="modal-busqueda"><div class="modal"><h2>Seleccione un producto</h2><div id="resultados-busqueda" class="lista-scroll"></div><div class="acciones-modal"><button class="btn-modal btn-cancelar" onclick="cerrarModal('modal-busqueda')">Cancelar</button></div></div></div>
+    <div class="overlay" id="modal-busqueda">
+        <div class="modal">
+            <h2>Resultados de Búsqueda</h2>
+            <div id="resultados-busqueda" class="lista-scroll"></div>
+            <div class="acciones-modal"><button class="btn-modal btn-cancelar" onclick="cerrarModal('modal-busqueda')">Cancelar</button></div>
+        </div>
+    </div>
     
     <div class="overlay" id="modal-clientes">
         <div class="modal">
@@ -201,7 +206,6 @@
                 <div class="grupo-input" style="flex:2;"><label>Proveedor:</label><input type="text" id="compra-prov" class="input-dinero" placeholder="Opcional"></div>
                 <div class="grupo-input" style="flex:2;"><label>N° Factura / Remito:</label><input type="text" id="compra-factura" class="input-dinero" placeholder="Ej: F-0001-00012345"></div>
                 
-                <!-- NUEVO SELECTOR COMPRA MIXTA -->
                 <div class="grupo-input" style="flex:1;">
                     <label>Pago:</label>
                     <select id="compra-metodo" class="input-dinero" onchange="cambiarMetodoCompra()">
@@ -214,7 +218,6 @@
 
             <div class="grupo-input"><label style="color:#673ab7;">Total Factura (Autocalculado / Editable):</label><div style="display:flex; align-items:center; gap:5px;"><span style="font-size:1.5rem; color:#673ab7;">$</span><input type="number" id="compra-total" class="input-dinero" style="width:100%; font-weight:bold; background:#f8fbff;" step="any" oninput="calcularMixtoCompra('efe')"></div></div>
 
-            <!-- NUEVO CONTENEDOR PARA COMPRA MIXTA -->
             <div id="compra-mixto-inputs" style="display:none; gap:10px; margin-bottom: 15px;">
                 <div class="grupo-input" style="flex:1;"><label style="color:#34a853;">Monto Efectivo:</label><input type="number" id="compra-mixto-efe" class="input-dinero" oninput="calcularMixtoCompra('efe')"></div>
                 <div class="grupo-input" style="flex:1;"><label style="color:#009ee3;">Monto MP:</label><input type="number" id="compra-mixto-mp" class="input-dinero" oninput="calcularMixtoCompra('mp')"></div>
@@ -312,7 +315,6 @@
     <div class="overlay" id="modal-dashboard">
         <div class="modal">
             <h2 style="color: #1976d2;">Dashboard de Estadísticas</h2>
-            <!-- Este iframe carga la hoja Dashboard directamente -->
             <iframe src="https://docs.google.com/spreadsheets/d/1RYH1MHaubZEIuRQifMqo4F8X51v-d7ygSFJYDJ92QLo/htmlembed?gid=554135672" style="flex: 1; width: 100%; border: 1px solid #ccc; border-radius: 8px;"></iframe>
             <div class="acciones-modal" style="margin-top: 15px; flex-shrink: 0;">
                 <button class="btn-modal btn-cancelar" onclick="cerrarModal('modal-dashboard')">Cerrar Dashboard</button>
@@ -322,7 +324,7 @@
 
     <script>
         // ¡REEMPLAZAR CON TU URL REAL DE APPS SCRIPT!
-        const API_URL = 'https://script.google.com/macros/s/AKfycbxB7bNvWaSwflwOPqo9i3qzMnGbQrRqFJsHjwhqfRuu6KrCGmPDb_6nt6lWVc91mPCByg/exec'; 
+        const API_URL = 'https://script.google.com/macros/s/AKfycbx2DaHjDe-2FZPaHc95jWnveP8sI0Mr7PdlV09C-nDPYDhhp0YmLpBXJjoqT37X0coHkA/exec'; 
         
         let catalogoProductos = [], directorioClientes = [], ticketActual = [], subtotalTicket = 0, descuentoActual = 0, totalTicket = 0;
         let datosCierreActual = {}; 
@@ -369,16 +371,55 @@
         }
 
         /* ----- POS PRINCIPAL ----- */
-        inputBuscador.addEventListener('keypress', function(e) { if (e.key === 'Enter') { e.preventDefault(); buscarProductoVenta(this.value.trim()); this.value = ''; } });
+        inputBuscador.addEventListener('keypress', function(e) { 
+            if (e.key === 'Enter') { 
+                e.preventDefault(); 
+                buscarProductoVenta(this.value.trim()); 
+                this.value = ''; 
+            } 
+        });
 
         function buscarProductoVenta(texto) {
             if (!texto) return;
+            
             let p = catalogoProductos.find(p => p.codigo === texto);
-            if (p) agregarAlTicket(p);
-            else {
+            if (p) {
+                agregarAlTicket(p);
+            } else {
                 let res = catalogoProductos.filter(p => p.nombre.toLowerCase().includes(texto.toLowerCase()) || p.codigo.includes(texto.toLowerCase()));
-                if (res.length === 1) agregarAlTicket(res[0]); else if (res.length > 1) mostrarModalBusqueda(res); else alert("Producto no encontrado.");
+                
+                if (res.length === 1) {
+                    agregarAlTicket(res[0]); 
+                } else if (res.length > 1) {
+                    mostrarModalBusqueda(res); 
+                } else {
+                    alert("Producto no encontrado.");
+                }
             }
+        }
+
+        function mostrarModalBusqueda(resultados) {
+            let div = document.getElementById('resultados-busqueda');
+            div.innerHTML = '';
+            
+            resultados.forEach(p => {
+                div.innerHTML += `
+                    <div class="item-lista" onclick="seleccionarProductoBusqueda('${p.codigo}')">
+                        <div style="display:flex; flex-direction:column; gap:4px;">
+                            <strong>${p.nombre}</strong>
+                            <span style="font-size:0.85rem; color:#5f6368;">Stock: ${p.stockActual} u.</span>
+                        </div>
+                        <span style="color:#1a73e8; font-weight:bold; font-size:1.3rem;">$${p.precioVenta.toLocaleString('es-AR')}</span>
+                    </div>`;
+            });
+            
+            document.getElementById('modal-busqueda').style.display = 'flex';
+        }
+
+        function seleccionarProductoBusqueda(codigo) {
+            let p = catalogoProductos.find(p => p.codigo === codigo);
+            if (p) agregarAlTicket(p);
+            cerrarModal('modal-busqueda');
         }
 
         function agregarAlTicket(prod) {
@@ -390,14 +431,44 @@
             actualizarVistaTicket();
         }
 
-        function cambiarCantidad(index, val) { let cant = parseFloat(val); if (isNaN(cant) || cant <= 0) cant = 1; ticketActual[index].cantidad = cant; ticketActual[index].total = cant * ticketActual[index].precioUnitario; actualizarVistaTicket(); }
+        function cambiarCantidad(index, val) { 
+            let cant = parseFloat(val); 
+            if (isNaN(cant) || cant <= 0) cant = 1; 
+            ticketActual[index].cantidad = cant; 
+            ticketActual[index].total = cant * ticketActual[index].precioUnitario; 
+            actualizarVistaTicket(); 
+        }
+
+        // NUEVA FUNCIÓN: Cambiar Precio Unitario a mano
+        function cambiarPrecio(index, val) {
+            let nPrecio = parseFloat(val);
+            // Si le borran el precio y queda en blanco, no hacemos nada hasta que pongan un número válido
+            if (isNaN(nPrecio) || nPrecio < 0) {
+                nPrecio = ticketActual[index].precioUnitario; // restaura si está mal
+            }
+            ticketActual[index].precioUnitario = nPrecio;
+            ticketActual[index].total = ticketActual[index].cantidad * nPrecio;
+            actualizarVistaTicket();
+        }
+
         function quitarDelTicket(index) { ticketActual.splice(index, 1); actualizarVistaTicket(); }
 
+        // ACTUALIZADA: Ahora muestra un Input para el Precio Unitario
         function actualizarVistaTicket() {
             let lista = document.getElementById('lista-ticket'); lista.innerHTML = ''; subtotalTicket = 0;
             ticketActual.forEach((item, index) => {
                 subtotalTicket += item.total;
-                lista.innerHTML += `<tr><td><strong>${item.nombre}</strong></td><td class="col-cant"><input type="number" class="input-cant" value="${item.cantidad}" min="0.001" step="any" onchange="cambiarCantidad(${index}, this.value)"></td><td class="col-precio">$${item.precioUnitario.toLocaleString('es-AR')}</td><td class="col-precio" style="font-weight:bold; color:#1a73e8;">$${item.total.toLocaleString('es-AR', {minimumFractionDigits:2})}</td><td class="col-quitar"><button class="btn-quitar" onclick="quitarDelTicket(${index})">X</button></td></tr>`;
+                lista.innerHTML += `<tr>
+                    <td><strong>${item.nombre}</strong></td>
+                    <td class="col-cant"><input type="number" class="input-cant" value="${item.cantidad}" min="0.001" step="any" onchange="cambiarCantidad(${index}, this.value)"></td>
+                    <td class="col-precio">
+                        <div style="display:flex; align-items:center; justify-content:flex-end; gap:3px;">
+                            $ <input type="number" class="input-cant" style="width: 75px; text-align:right;" value="${item.precioUnitario}" step="any" onchange="cambiarPrecio(${index}, this.value)">
+                        </div>
+                    </td>
+                    <td class="col-precio" style="font-weight:bold; color:#1a73e8;">$${item.total.toLocaleString('es-AR', {minimumFractionDigits:2})}</td>
+                    <td class="col-quitar"><button class="btn-quitar" onclick="quitarDelTicket(${index})">X</button></td>
+                </tr>`;
             });
             if (descuentoActual > subtotalTicket) descuentoActual = 0;
             totalTicket = subtotalTicket - descuentoActual;
@@ -617,9 +688,7 @@
             let costo = parseFloat(document.getElementById('nuevo-prod-costo').value) || 0; 
             let margen = parseFloat(document.getElementById('nuevo-prod-margen').value) || 0;
             if(margen < 100) {
-                // Se calcula el precio "crudo"
                 let precioCrudo = costo / (1 - (margen / 100));
-                // Se redondea a la centena más cercana (ej: 4285.71 pasa a 4300)
                 let precioRedondeado = Math.round(precioCrudo / 100) * 100;
                 document.getElementById('nuevo-prod-venta').value = precioRedondeado.toFixed(2);
             }
@@ -665,7 +734,6 @@
             if(isNaN(total) || total < 0) return alert("Ingresá el monto de la factura.");
             if(itemsCompraTemporal.length === 0) return alert("No hay items cargados en la factura.");
 
-            // NUEVA LÓGICA DE PAGOS PARA COMPRA
             let efe = 0, mp = 0;
             if (metodo === 'Efectivo') {
                 efe = total;
@@ -689,7 +757,7 @@
                         numeroFactura: factura, 
                         total: total, 
                         metodo: metodo, 
-                        pagos: { efectivo: efe, mp: mp }, // Se envían los montos exactos
+                        pagos: { efectivo: efe, mp: mp }, 
                         detalle: itemsCompraTemporal 
                     }
                 })

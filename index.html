@@ -1,1 +1,642 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Noble Cosecha - POS</title>
+    <!-- Favicon para la pestaña del navegador -->
+    <link rel="icon" type="image/png" href="logo.png">
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #e9ecef; margin: 0; padding: 10px 15px; display: flex; flex-direction: column; height: 100vh; box-sizing: border-box; }
+        
+        /* HEADER COMPACTO Y ARRIBA */
+        .header { display: flex; justify-content: space-between; align-items: center; background-color: #fff; padding: 10px 20px; border-radius: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); margin-bottom: 10px; flex-shrink: 0; gap: 15px; flex-wrap: wrap; }
+        .header-izquierda { display: flex; align-items: center; gap: 15px; flex-wrap: wrap; }
+        .header img { height: 40px; width: auto; object-fit: contain; }
+        .header h1 { margin: 0; color: #1a73e8; font-size: 1.4rem; font-weight: 700; }
+        .header-acciones { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        
+        .btn-header { background: #e8f0fe; color: #1a73e8; border: 2px solid #1a73e8; padding: 6px 10px; border-radius: 6px; font-weight: bold; font-size: 0.85rem; cursor: pointer; transition: 0.2s; }
+        .btn-header:hover { background: #d2e3fc; }
+        .btn-apertura { background: #e6f4ea; color: #137333; border: 2px solid #137333; }
+        .btn-cierre { background: #fff3e0; color: #f29900; border: 2px solid #f29900; }
+        .btn-compras { background: #f3e8fd; color: #673ab7; border: 2px solid #673ab7; }
+        .btn-retiro { background: #fce8e6; color: #d32f2f; border: 2px solid #d32f2f; }
 
+        #estado { font-weight: bold; color: #137333; background: #e6f4ea; padding: 6px 12px; border-radius: 15px; font-size: 0.95rem; }
+        
+        .main-container { display: flex; gap: 15px; flex: 1; min-height: 0; overflow: hidden; }
+        .panel-izquierdo { flex: 2.2; display: flex; flex-direction: column; background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; }
+        .buscador-container { margin-bottom: 12px; flex-shrink: 0; }
+        #input-buscador { width: 100%; padding: 14px; font-size: 1.3rem; border: 2px solid #a4c2f4; border-radius: 8px; box-sizing: border-box; background-color: #f8fbff; transition: 0.2s; }
+        #input-buscador:focus { outline: none; border-color: #1a73e8; box-shadow: 0 0 0 4px rgba(26,115,232,0.1); background-color: #fff; }
+        .ticket-container { flex: 1; overflow-y: auto; border: 1px solid #e0e0e0; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background-color: #f1f3f4; padding: 10px 15px; text-align: left; font-size: 1.05rem; color: #5f6368; border-bottom: 2px solid #ddd; position: sticky; top: 0; z-index: 10; }
+        td { padding: 10px 15px; font-size: 1.1rem; border-bottom: 1px solid #eee; vertical-align: middle; color: #202124; }
+        
+        .col-cant { width: 110px; text-align: center; } 
+        .input-cant { width: 80px; font-size: 1.1rem; padding: 6px 4px; text-align: center; border: 2px solid #ccc; border-radius: 6px; font-weight: bold; color: #1a73e8; }
+        .col-precio { text-align: right; }
+        .col-quitar { width: 60px; text-align: center; }
+        .btn-quitar { background: #fee8e7; color: #d32f2f; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 1rem; font-weight: bold; transition: 0.2s; }
+        
+        .panel-derecho { flex: 1; display: flex; flex-direction: column; background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); overflow: hidden; }
+        .total-box { background: #f8fbff; padding: 10px; border-radius: 10px; text-align: center; margin-bottom: 12px; border: 2px solid #1a73e8; flex-shrink: 0; }
+        .total-titulo { font-size: 1.1rem; color: #5f6368; margin-bottom: 2px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
+        .total-monto-container { display: flex; align-items: baseline; justify-content: center; gap: 6px; width: 100%; }
+        .signo-peso { font-size: 1.8rem; color: #1a73e8; font-weight: bold; }
+        .total-monto { font-size: 3rem; font-weight: 800; color: #1a73e8; line-height: 1; margin: 0; letter-spacing: -1px; }
+        
+        .seccion-cobro { display: flex; flex-direction: column; flex: 1; justify-content: flex-end; }
+        
+        /* BOTONES DE PAGO */
+        .metodos-pago { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; flex: 1; }
+        .btn-pago { width: 100%; padding: 12px 10px; font-size: 1.15rem; font-weight: 700; border: none; border-radius: 8px; cursor: pointer; color: white; display: flex; justify-content: center; align-items: center; transition: 0.2s; flex: 1; }
+        .btn-pago:hover { opacity: 0.92; }
+        .btn-pago:disabled { background-color: #e0e0e0 !important; color: #9e9e9e !important; cursor: not-allowed; opacity: 1; }
+        
+        .btn-efectivo { background-color: #34a853; }
+        .btn-mp { background-color: #009ee3; }
+        .btn-mixto { background-color: #673ab7; }
+        .btn-descuento { background-color: #f29900; }
+        .btn-fiado { background-color: #ea4335; }
+        
+        .overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 100; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
+        .modal { background: white; padding: 25px; border-radius: 12px; width: 90%; max-width: 520px; text-align: center; box-shadow: 0 10px 25px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;}
+        .modal h2 { font-size: 1.6rem; margin-top: 0; color: #202124; margin-bottom: 15px;}
+        .lista-scroll { overflow-y: auto; text-align: left; margin-bottom: 15px; max-height: 300px; }
+        .item-lista { padding: 15px; border-bottom: 1px solid #eee; font-size: 1.2rem; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .item-lista:hover { background-color: #f1f3f4; }
+        .grupo-input { display: flex; flex-direction: column; text-align: left; margin-bottom: 12px; }
+        .grupo-input label { font-weight: 600; margin-bottom: 5px; color: #3c4043; }
+        .input-dinero { font-size: 1.2rem; padding: 8px; border: 2px solid #ccc; border-radius: 6px; }
+        .acciones-modal { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-modal { flex: 1; padding: 12px; font-size: 1.1rem; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; color: white; }
+        .btn-confirmar { background-color: #1a73e8; }
+        .btn-cancelar { background-color: #9e9e9e; }
+        .texto-arqueo { font-size: 1.1rem; color: #3c4043; border-bottom: 1px dashed #ccc; padding-bottom: 5px; margin-bottom: 6px;}
+        
+        #modal-compra .modal { max-width: 700px; }
+        .tabla-mini { width: 100%; font-size: 1rem; margin-top: 10px; }
+        .tabla-mini th { background: #f3e8fd; color: #673ab7; padding: 8px; }
+        .tabla-mini td { padding: 8px; border-bottom: 1px solid #eee;}
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="header-izquierda">
+            <img src="logo.png" alt="Logo Noble Cosecha">
+            <h1>Noble Cosecha</h1>
+            <div class="header-acciones">
+                <button class="btn-header btn-apertura" onclick="abrirModalApertura()">🟢 APERTURA</button>
+                <button class="btn-header" onclick="abrirModalPagarDeuda()">💰 PAGO LIBRETA</button>
+                <button class="btn-header btn-compras" onclick="abrirModalCompra()">📦 COMPRAS / INGRESOS</button>
+                <button class="btn-header btn-retiro" onclick="abrirModalMovimiento()">💸 INGRESO / RETIRO</button>
+                <button class="btn-header btn-cierre" onclick="abrirModalCierre()">📊 CIERRE</button>
+            </div>
+        </div>
+        <div id="estado">Cargando sistema...</div>
+    </div>
+
+    <!-- MAIN POS -->
+    <div class="main-container">
+        <div class="panel-izquierdo">
+            <div class="buscador-container"><input type="text" id="input-buscador" placeholder="Pase el código o busque..." autocomplete="off"></div>
+            <div class="ticket-container">
+                <table id="tabla-ticket">
+                    <thead><tr><th>Producto</th><th class="col-cant">Cant.</th><th class="col-precio">Precio</th><th class="col-precio">Subtotal</th><th class="col-quitar"></th></tr></thead>
+                    <tbody id="lista-ticket"></tbody>
+                </table>
+            </div>
+        </div>
+        <div class="panel-derecho">
+            <div class="total-box">
+                <div class="total-titulo">TOTAL A COBRAR</div>
+                <div class="total-monto-container"><span class="signo-peso">$</span><span id="monto-total" class="total-monto">0.00</span></div>
+                <div id="aviso-descuento" style="font-size: 0.95rem; color: #d98200; font-weight: bold; margin-top: 3px; display: none;"></div>
+            </div>
+            <div class="seccion-cobro">
+                <div class="metodos-pago">
+                    <button class="btn-pago btn-efectivo" onclick="prepararCobroUnico('Efectivo')" id="btn-efectivo" disabled>EFECTIVO</button>
+                    <button class="btn-pago btn-mp" onclick="prepararCobroUnico('MP')" id="btn-mp" disabled>TRANSF. / MP</button>
+                    <button class="btn-pago btn-mixto" onclick="abrirModalMixto()" id="btn-mixto" disabled>PAGO DIVIDIDO</button>
+                    <button class="btn-pago btn-descuento" onclick="abrirModalDescuento()" id="btn-descuento" disabled>🏷️ DESCUENTO</button>
+                    <button class="btn-pago btn-fiado" onclick="abrirModalClientes()" id="btn-fiado" disabled>LIBRETA (FIADO)</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modales de Venta -->
+    <div class="overlay" id="modal-busqueda"><div class="modal"><h2>Seleccione un producto</h2><div id="resultados-busqueda" class="lista-scroll"></div><div class="acciones-modal"><button class="btn-modal btn-cancelar" onclick="cerrarModal('modal-busqueda')">Cancelar</button></div></div></div>
+    
+    <div class="overlay" id="modal-clientes">
+        <div class="modal">
+            <h2>¿A quién le fiamos?</h2>
+            <div id="lista-clientes-div" class="lista-scroll"></div>
+            <div class="acciones-modal"><button class="btn-modal btn-cancelar" onclick="cerrarModal('modal-clientes')">Cancelar</button></div>
+        </div>
+    </div>
+
+    <div class="overlay" id="modal-descuento"><div class="modal"><h2>Aplicar Descuento</h2><div style="display:flex; justify-content:center; gap:5px; margin-bottom:15px;"><span style="font-size:2rem;">$</span><input type="number" id="input-valor-descuento" class="input-dinero"></div><div class="acciones-modal"><button class="btn-modal btn-cancelar" onclick="cerrarModal('modal-descuento')">Cancelar</button><button class="btn-modal" style="background-color: #f29900;" onclick="aplicarDescuento()">Aplicar</button></div></div></div>
+    
+    <!-- APERTURA -->
+    <div class="overlay" id="modal-apertura">
+        <div class="modal">
+            <h2 style="color: #137333;">Apertura de Caja</h2>
+            <div class="grupo-input"><label>Fondo Inicial Efectivo (Caja Física):</label><div style="display:flex; align-items:center; gap:5px;"><span style="font-size:1.5rem;">$</span><input type="number" id="input-fondo-efe" class="input-dinero" style="width:100%;" placeholder="0"></div></div>
+            <div class="grupo-input"><label>Fondo Inicial Transf / MP (Cuenta Digital):</label><div style="display:flex; align-items:center; gap:5px;"><span style="font-size:1.5rem;">$</span><input type="number" id="input-fondo-mp" class="input-dinero" style="width:100%;" placeholder="0"></div></div>
+            <div class="acciones-modal"><button class="btn-modal btn-cancelar" onclick="cerrarModal('modal-apertura')">Cancelar</button><button class="btn-modal btn-confirmar" onclick="guardarApertura()">Guardar Apertura</button></div>
+        </div>
+    </div>
+    
+    <div class="overlay" id="modal-pagar-deuda">
+        <div class="modal">
+            <h2>Pago Libreta</h2>
+            <div class="grupo-input"><label>Cliente:</label><select id="select-cliente-pago" class="input-dinero"></select></div>
+            <div class="grupo-input"><label>Monto:</label><input type="number" id="input-monto-deuda" class="input-dinero"></div>
+            <div class="acciones-modal"><button class="btn-modal" style="background-color: #34a853;" onclick="enviarPagoDeuda('Efectivo')">EFECTIVO</button><button class="btn-modal" style="background-color: #009ee3;" onclick="enviarPagoDeuda('MP')">MP</button><button class="btn-modal btn-cancelar" onclick="cerrarModal('modal-pagar-deuda')">Cancelar</button></div>
+        </div>
+    </div>
+
+    <div class="overlay" id="modal-mixto"><div class="modal"><h2>Dividir Pago</h2><div class="grupo-input"><label>Efectivo:</label><input type="number" id="input-mixto-efectivo" class="input-dinero" oninput="calcularMixto('efectivo')"></div><div class="grupo-input"><label>Transf / MP:</label><input type="number" id="input-mixto-mp" class="input-dinero" oninput="calcularMixto('mp')"></div><div class="acciones-modal"><button class="btn-modal btn-cancelar" onclick="cerrarModal('modal-mixto')">Cancelar</button><button class="btn-modal btn-confirmar" onclick="procesarVentaMixta()">Confirmar</button></div></div></div>
+
+    <!-- INGRESOS Y RETIROS DE CAJA -->
+    <div class="overlay" id="modal-movimiento">
+        <div class="modal">
+            <h2 style="color: #5f6368;">Movimiento de Caja</h2>
+            
+            <div class="grupo-input">
+                <label>Tipo de Movimiento:</label>
+                <select id="mov-tipo" class="input-dinero" onchange="cambiarColorMovimiento()">
+                    <option value="Retiro">🔴 Retiro de Dinero (Salida)</option>
+                    <option value="Ingreso">🟢 Ingreso de Dinero (Entrada)</option>
+                </select>
+            </div>
+            
+            <div class="grupo-input"><label>Motivo:</label><input type="text" id="mov-motivo" class="input-dinero" placeholder="Ej: Pago de luz, Sencillo..."></div>
+            <div class="grupo-input"><label>Monto:</label><div style="display:flex; align-items:center; gap:5px;"><span style="font-size:1.5rem;">$</span><input type="number" id="mov-monto" class="input-dinero" style="width:100%;"></div></div>
+            <div class="grupo-input"><label>Caja o Cuenta:</label><select id="mov-metodo" class="input-dinero"><option value="Efectivo">Caja Física (Efectivo)</option><option value="MP">Cuenta Digital (MP)</option></select></div>
+            
+            <div class="acciones-modal">
+                <button class="btn-modal btn-cancelar" onclick="cerrarModal('modal-movimiento')">Cancelar</button>
+                <button class="btn-modal" id="btn-guardar-mov" style="background-color: #d32f2f;" onclick="procesarMovimiento()">Registrar Movimiento</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- INGRESOS / COMPRAS DE MERCADERÍA -->
+    <div class="overlay" id="modal-compra">
+        <div class="modal">
+            <h2 style="color: #673ab7;">Ingreso de Mercadería</h2>
+            <div style="display:flex; gap:10px;">
+                <div class="grupo-input" style="flex:2;"><label>Proveedor:</label><input type="text" id="compra-prov" class="input-dinero" placeholder="Opcional"></div>
+                <div class="grupo-input" style="flex:2;"><label>N° Factura / Remito:</label><input type="text" id="compra-factura" class="input-dinero" placeholder="Ej: F-0001-00012345"></div>
+                <div class="grupo-input" style="flex:1;"><label>Pago:</label><select id="compra-metodo" class="input-dinero"><option value="Efectivo">Efectivo</option><option value="MP">Transf/MP</option></select></div>
+            </div>
+            <div class="grupo-input"><label style="color:#673ab7;">Total Factura (Autocalculado / Editable):</label><div style="display:flex; align-items:center; gap:5px;"><span style="font-size:1.5rem; color:#673ab7;">$</span><input type="number" id="compra-total" class="input-dinero" style="width:100%; font-weight:bold; background:#f8fbff;" step="any"></div></div>
+
+            <hr style="border: 0; border-top: 2px dashed #eee; margin: 15px 0;">
+            <h3 style="margin: 0 0 10px 0; font-size:1.1rem;">1. Cargar Items al Stock</h3>
+            <input type="text" id="input-buscador-compra" class="input-dinero" style="width:95%; border-color:#673ab7;" placeholder="Escaneá el producto que entró..." autocomplete="off">
+            
+            <div style="max-height: 150px; overflow-y: auto; border:1px solid #ccc; border-radius:6px; margin-top:10px;">
+                <table class="tabla-mini"><thead><tr><th>Producto</th><th>Cant.</th><th>Costo</th><th></th></tr></thead><tbody id="lista-items-compra"></tbody></table>
+            </div>
+
+            <div class="acciones-modal">
+                <button class="btn-modal btn-cancelar" onclick="cerrarModal('modal-compra')">Cerrar</button>
+                <button class="btn-modal" style="background-color: #673ab7;" onclick="guardarCompra()">💾 Guardar Factura</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL INGRESO EXISTENTE -->
+    <div class="overlay" id="modal-ingreso-stock">
+        <div class="modal">
+            <h2 id="ingreso-stock-titulo" style="color: #673ab7;">Actualizar Stock</h2>
+            <div class="grupo-input"><label>Cantidad que ingresa:</label><input type="number" id="ingreso-stock-cant" class="input-dinero" step="any" min="0.001"></div>
+            <div class="grupo-input"><label>Nuevo Costo Unitario ($):</label><input type="number" id="ingreso-stock-costo" class="input-dinero" step="any" min="0"></div>
+            <div class="acciones-modal"><button class="btn-modal btn-cancelar" onclick="cerrarModal('modal-ingreso-stock'); document.getElementById('input-buscador-compra').focus();">Cancelar</button><button class="btn-modal btn-confirmar" onclick="confirmarIngresoStock()">Confirmar Ingreso</button></div>
+        </div>
+    </div>
+
+    <!-- MODAL CREAR PRODUCTO NUEVO -->
+    <div class="overlay" id="modal-nuevo-prod">
+        <div class="modal">
+            <h2>Crear Producto Nuevo</h2>
+            <div style="display:flex; gap:10px;">
+                <div class="grupo-input" style="flex:1;"><label>Código:</label><input type="text" id="nuevo-prod-cod" class="input-dinero" readonly style="background:#eee;"></div>
+                <div class="grupo-input" style="flex:2;"><label>Nombre:</label><input type="text" id="nuevo-prod-nom" class="input-dinero"></div>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <div class="grupo-input" style="flex:1;">
+                    <label>Categoría:</label>
+                    <select id="nuevo-prod-cat" class="input-dinero"></select>
+                </div>
+                <div class="grupo-input" style="flex:1;"><label>Margen (%):</label><input type="number" id="nuevo-prod-margen" class="input-dinero" value="30" oninput="calcularPrecioVentaModal()"></div>
+            </div>
+            <div style="display:flex; gap:10px;">
+                <div class="grupo-input"><label>Costo ($):</label><input type="number" id="nuevo-prod-costo" class="input-dinero" oninput="calcularPrecioVentaModal()" step="any"></div>
+                <div class="grupo-input"><label>Precio Venta (Aprox):</label><input type="number" id="nuevo-prod-venta" class="input-dinero" readonly style="background:#e6f4ea; font-weight:bold; color:#137333;"></div>
+            </div>
+            <div class="grupo-input"><label style="color:#673ab7;">Cant. Comprada:</label><input type="number" id="nuevo-prod-cant" class="input-dinero" style="border-color:#673ab7;" step="any"></div>
+            <div class="acciones-modal"><button class="btn-modal btn-cancelar" onclick="cerrarModal('modal-nuevo-prod'); document.getElementById('input-buscador-compra').focus();">Cancelar</button><button class="btn-modal btn-confirmar" onclick="agregarNuevoProductoACompra()">Crear y Añadir</button></div>
+        </div>
+    </div>
+
+    <!-- CIERRE DE CAJA -->
+    <div class="overlay" id="modal-cierre">
+        <div class="modal">
+            <h2 style="color: #f29900; font-size: 2rem; margin-bottom: 5px;">Arqueo de Caja</h2>
+            <div style="text-align: left; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #eee;">
+                
+                <div class="texto-arqueo">🟢 Fondo Inicial (Efe): <span id="cierre-fondo-efe" style="float: right; font-weight:bold;">$0.00</span></div>
+                <div class="texto-arqueo">🟢 Fondo Inicial (MP): <span id="cierre-fondo-mp" style="float: right; font-weight:bold;">$0.00</span></div>
+                
+                <!-- EFECTIVO -->
+                <div class="texto-arqueo">💵 Ventas en Efectivo: <span id="cierre-ventas-efe" style="float: right; font-weight:bold;">$0.00</span></div>
+                <div style="font-size: 0.95rem; color: #137333; margin-bottom: 3px;">🟢 Otros Ingresos (Efe): <span id="cierre-ingresos-efe" style="float: right;">+$0.00</span></div>
+                <div style="font-size: 0.95rem; color: #d32f2f; margin-bottom: 3px;">🔴 Menos Retiros (Efe): <span id="cierre-retiros-efe" style="float: right;">-$0.00</span></div>
+                <div style="font-size: 0.95rem; color: #d32f2f; padding-bottom: 6px; border-bottom: 1px solid #ccc; margin-bottom: 6px;">🔴 Menos Proveedores (Efe): <span id="cierre-compras-efe" style="float: right;">-$0.00</span></div>
+                
+                <div style="font-size: 1.2rem; font-weight: bold; color: #34a853; padding-bottom: 6px; margin-bottom: 6px; border-bottom: 1px solid #ccc;">
+                    💵 EFECTIVO EN CAJA: <span id="cierre-efe-total" style="float: right;">$0.00</span>
+                </div>
+                
+                <!-- MERCADOPAGO -->
+                <div class="texto-arqueo">📱 Ventas / Ingresos (MP): <span id="cierre-ventas-mp" style="float: right; font-weight:bold;">$0.00</span></div>
+                <div style="font-size: 0.95rem; color: #137333; margin-bottom: 3px;">🟢 Otros Ingresos (MP): <span id="cierre-ingresos-mp" style="float: right;">+$0.00</span></div>
+                <div style="font-size: 0.95rem; color: #d32f2f; margin-bottom: 3px;">🔴 Menos Retiros (MP): <span id="cierre-retiros-mp" style="float: right;">-$0.00</span></div>
+                <div style="font-size: 0.95rem; color: #d32f2f; padding-bottom: 6px; border-bottom: 1px solid #ccc; margin-bottom: 6px;">🔴 Menos Proveedores (MP): <span id="cierre-compras-mp" style="float: right;">-$0.00</span></div>
+
+                <div style="font-size: 1.2rem; font-weight: bold; color: #009ee3; padding-bottom: 6px; margin-bottom: 6px; border-bottom: 1px solid #ccc;">
+                    📱 TRANSF / MP TOTAL: <span id="cierre-mp" style="float: right;">$0.00</span>
+                </div>
+
+                <div class="texto-arqueo">📖 Fiados del Día: <span id="cierre-fiado" style="color: #ea4335; float: right; font-weight:bold;">$0.00</span></div>
+                
+                <div style="font-size: 1.3rem; font-weight: bold; color: #1a73e8; margin-top: 5px;">
+                    💰 BALANCE GENERAL TOTAL: <span id="cierre-total" style="float: right;">$0.00</span>
+                </div>
+            </div>
+            <div class="acciones-modal"><button class="btn-modal btn-cancelar" onclick="cerrarModal('modal-cierre')">Cerrar</button><button class="btn-modal" style="background-color: #f29900;" onclick="guardarCierreEnPlanilla()">💾 Guardar Cierre</button></div>
+        </div>
+    </div>
+
+    <script>
+        // ¡REEMPLAZAR CON TU URL REAL DE APPS SCRIPT!
+        const API_URL = 'https://script.google.com/macros/s/AKfycbx3RIlQm2A9G-L47hooStz0EXhF6GrjJbOKlpYsMgaVkZXlqhuKob0RaE29piTKD1_gqA/exec'; 
+        
+        let catalogoProductos = [], directorioClientes = [], ticketActual = [], subtotalTicket = 0, descuentoActual = 0, totalTicket = 0;
+        let datosCierreActual = {}; 
+        let itemsCompraTemporal = []; 
+        let productoEnFoco = null;
+
+        const inputBuscador = document.getElementById('input-buscador');
+        const estadoDiv = document.getElementById('estado');
+        const spanTotal = document.getElementById('monto-total');
+        const botonesPago = document.querySelectorAll('.btn-pago');
+
+        window.onload = function() { inputBuscador.focus(); obtenerDatosDeSheets(); };
+
+        function setEstado(texto, colorFondo, colorTexto) { estadoDiv.innerText = texto; estadoDiv.style.backgroundColor = colorFondo; estadoDiv.style.color = colorTexto; }
+
+        function limpiarPrecio(precio) {
+            if (!precio) return 0;
+            let str = String(precio).trim().replace('$', '');
+            if (str.includes(',') && str.indexOf(',') > str.indexOf('.')) { str = str.replace(/\./g, '').replace(',', '.'); } 
+            else if (str.includes(',') && str.indexOf('.') > str.indexOf(',')) { str = str.replace(/,/g, ''); } 
+            else if (str.includes(',') && !str.includes('.')) { str = str.replace(',', '.'); }
+            return parseFloat(str) || 0;
+        }
+
+        function obtenerDatosDeSheets() {
+            fetch(`${API_URL}?accion=obtenerProductos`).then(r => r.json()).then(data => { 
+                catalogoProductos = data; 
+                actualizarMaestroCategorias();
+                setEstado(`Listo - ${catalogoProductos.length} prod`, '#e6f4ea', '#137333'); 
+            }).catch(() => setEstado('Error', '#fce8e6', '#c5221f'));
+            fetch(`${API_URL}?accion=obtenerClientes`).then(r => r.json()).then(data => { directorioClientes = data; });
+        }
+
+        function actualizarMaestroCategorias() {
+            let categoriasDefault = ['Almacén', 'Bebidas', 'Golosinas', 'Limpieza', 'Lácteos', 'Kiosco', 'Panadería', 'Varios'];
+            let categoriasSet = new Set(categoriasDefault);
+            catalogoProductos.forEach(p => { if(p.categoria) categoriasSet.add(p.categoria); });
+            
+            let selectCat = document.getElementById('nuevo-prod-cat');
+            selectCat.innerHTML = '';
+            categoriasSet.forEach(cat => {
+                selectCat.innerHTML += `<option value="${cat}">${cat}</option>`;
+            });
+        }
+
+        /* ----- POS PRINCIPAL ----- */
+        inputBuscador.addEventListener('keypress', function(e) { if (e.key === 'Enter') { e.preventDefault(); buscarProductoVenta(this.value.trim()); this.value = ''; } });
+
+        function buscarProductoVenta(texto) {
+            if (!texto) return;
+            let p = catalogoProductos.find(p => p.codigo === texto);
+            if (p) agregarAlTicket(p);
+            else {
+                let res = catalogoProductos.filter(p => p.nombre.toLowerCase().includes(texto.toLowerCase()) || p.codigo.includes(texto.toLowerCase()));
+                if (res.length === 1) agregarAlTicket(res[0]); else if (res.length > 1) mostrarModalBusqueda(res); else alert("Producto no encontrado.");
+            }
+        }
+
+        function agregarAlTicket(prod) {
+            if (prod.stockActual <= prod.stockMinimo) alert(`⚠️ STOCK BAJO: "${prod.nombre}" tiene ${prod.stockActual} unidades.`);
+            let item = ticketActual.find(i => i.codigo === prod.codigo);
+            let precio = limpiarPrecio(prod.precioVenta);
+            if (item) { item.cantidad++; item.total = item.cantidad * item.precioUnitario; } 
+            else { ticketActual.push({ codigo: prod.codigo, nombre: prod.nombre, cantidad: 1, precioUnitario: precio, total: precio }); }
+            actualizarVistaTicket();
+        }
+
+        function cambiarCantidad(index, val) { let cant = parseFloat(val); if (isNaN(cant) || cant <= 0) cant = 1; ticketActual[index].cantidad = cant; ticketActual[index].total = cant * ticketActual[index].precioUnitario; actualizarVistaTicket(); }
+        function quitarDelTicket(index) { ticketActual.splice(index, 1); actualizarVistaTicket(); }
+
+        function actualizarVistaTicket() {
+            let lista = document.getElementById('lista-ticket'); lista.innerHTML = ''; subtotalTicket = 0;
+            ticketActual.forEach((item, index) => {
+                subtotalTicket += item.total;
+                lista.innerHTML += `<tr><td><strong>${item.nombre}</strong></td><td class="col-cant"><input type="number" class="input-cant" value="${item.cantidad}" min="0.001" step="any" onchange="cambiarCantidad(${index}, this.value)"></td><td class="col-precio">$${item.precioUnitario.toLocaleString('es-AR')}</td><td class="col-precio" style="font-weight:bold; color:#1a73e8;">$${item.total.toLocaleString('es-AR', {minimumFractionDigits:2})}</td><td class="col-quitar"><button class="btn-quitar" onclick="quitarDelTicket(${index})">X</button></td></tr>`;
+            });
+            if (descuentoActual > subtotalTicket) descuentoActual = 0;
+            totalTicket = subtotalTicket - descuentoActual;
+            spanTotal.innerText = totalTicket.toLocaleString('es-AR', {minimumFractionDigits: 2});
+            let aviso = document.getElementById('aviso-descuento');
+            if (descuentoActual > 0) { aviso.style.display = 'block'; aviso.innerText = `Subtotal: $${subtotalTicket.toLocaleString('es-AR')} (-$${descuentoActual} desc)`; } else { aviso.style.display = 'none'; }
+            botonesPago.forEach(btn => btn.disabled = (ticketActual.length === 0));
+        }
+
+        function enviarVentaAlMotor(pagos, cliente) {
+            setEstado('Registrando...', '#fff3e0', '#fbbc05');
+            let datos = { accion: 'registrarVenta', ventas: { numeroTicket: Date.now().toString().slice(-6), pagos: pagos, cliente: cliente, descuento: descuentoActual, detalle: ticketActual } };
+            fetch(API_URL, { method: 'POST', body: JSON.stringify(datos) }).then(r => r.json()).then(d => {
+                if(d.status === 'success') { ticketActual=[]; descuentoActual=0; actualizarVistaTicket(); setEstado('¡Cobro Exitoso!', '#e6f4ea', '#137333'); obtenerDatosDeSheets(); }
+            });
+        }
+        function prepararCobroUnico(t) { let p = {efectivo:0, mp:0, fiado:0}; if(t==='Efectivo') p.efectivo=totalTicket; else p.mp=totalTicket; enviarVentaAlMotor(p, ""); }
+
+        /* ----- MODALES Y LIBRETA (FIADO) ----- */
+        function cerrarModal(id) { document.getElementById(id).style.display = 'none'; inputBuscador.focus(); }
+        
+        function abrirModalClientes() {
+            let div = document.getElementById('lista-clientes-div');
+            div.innerHTML = '';
+            if (directorioClientes.length === 0) {
+                div.innerHTML = '<div style="padding:15px; text-align:center;">No hay clientes en Cuentas Corrientes.</div>';
+            } else {
+                directorioClientes.forEach(c => {
+                    div.innerHTML += `<div class="item-lista" onclick="seleccionarClienteFiado('${c.nombre}')"><strong>${c.nombre}</strong> <span style="color:#d93025;">Saldo: $${c.saldo.toLocaleString('es-AR')}</span></div>`;
+                });
+            }
+            document.getElementById('modal-clientes').style.display = 'flex';
+        }
+
+        function seleccionarClienteFiado(nombreCliente) {
+            cerrarModal('modal-clientes');
+            enviarVentaAlMotor({ efectivo: 0, mp: 0, fiado: totalTicket }, nombreCliente);
+        }
+
+        function abrirModalDescuento() { document.getElementById('input-valor-descuento').value=''; document.getElementById('modal-descuento').style.display='flex'; document.getElementById('input-valor-descuento').focus(); }
+        function aplicarDescuento() { let m = parseFloat(document.getElementById('input-valor-descuento').value)||0; if(m<0 || m>=subtotalTicket) return alert("Monto inválido"); descuentoActual = m; cerrarModal('modal-descuento'); actualizarVistaTicket(); }
+        function abrirModalMixto() { document.getElementById('modal-mixto').style.display='flex'; }
+        function calcularMixto(o) { let e = parseFloat(document.getElementById('input-mixto-efectivo').value)||0; let m = parseFloat(document.getElementById('input-mixto-mp').value)||0; if(o==='efectivo' && e<=totalTicket) document.getElementById('input-mixto-mp').value=(totalTicket-e).toFixed(2); else if(o==='mp' && m<=totalTicket) document.getElementById('input-mixto-efectivo').value=(totalTicket-m).toFixed(2); }
+        function procesarVentaMixta() { let e = parseFloat(document.getElementById('input-mixto-efectivo').value)||0; let m = parseFloat(document.getElementById('input-mixto-mp').value)||0; if(Math.abs((e+m)-totalTicket)>0.5) return alert("No suma el total."); cerrarModal('modal-mixto'); enviarVentaAlMotor({efectivo:e, mp:m, fiado:0}, ""); }
+        
+        /* ----- APERTURA DE CAJA CON AUTOCOMPLETADO ----- */
+        function abrirModalApertura() { 
+            setEstado('Consultando saldo real...', '#fff3e0', '#fbbc05');
+            fetch(`${API_URL}?accion=obtenerSaldoCajaReal`)
+            .then(r => r.json())
+            .then(data => {
+                let efe = parseFloat(data.efectivoReal);
+                if (isNaN(efe)) efe = 0;
+                let mp = parseFloat(data.mpReal);
+                if (isNaN(mp)) mp = 0;
+                
+                document.getElementById('input-fondo-efe').value = efe !== 0 ? efe.toFixed(2) : ''; 
+                document.getElementById('input-fondo-mp').value = mp !== 0 ? mp.toFixed(2) : ''; 
+                
+                document.getElementById('modal-apertura').style.display = 'flex'; 
+                document.getElementById('input-fondo-efe').focus();
+                setEstado('Caja cargada', '#e6f4ea', '#137333');
+            })
+            .catch(() => {
+                document.getElementById('input-fondo-efe').value = ''; 
+                document.getElementById('input-fondo-mp').value = ''; 
+                document.getElementById('modal-apertura').style.display = 'flex'; 
+                document.getElementById('input-fondo-efe').focus();
+                setEstado('Error de red', '#fce8e6', '#c5221f');
+            });
+        }
+        
+        function guardarApertura() { 
+            let efe = parseFloat(document.getElementById('input-fondo-efe').value) || 0;
+            let mp = parseFloat(document.getElementById('input-fondo-mp').value) || 0;
+            setEstado('Guardando apertura...', '#fff3e0', '#fbbc05');
+            fetch(API_URL, {method:'POST', body:JSON.stringify({accion:'registrarApertura', monto: {efectivo: efe, mp: mp}})}).then(r=>r.json()).then(d=>{
+                if(d.status==='success'){ cerrarModal('modal-apertura'); setEstado('¡Apertura registrada!', '#e6f4ea','#137333'); }
+            });
+        }
+        
+        function abrirModalPagarDeuda() {
+            let select = document.getElementById('select-cliente-pago');
+            select.innerHTML = '';
+            directorioClientes.forEach(c => {
+                select.innerHTML += `<option value="${c.nombre}">${c.nombre} (Debe: $${c.saldo.toLocaleString('es-AR')})</option>`;
+            });
+            document.getElementById('input-monto-deuda').value = '';
+            document.getElementById('modal-pagar-deuda').style.display = 'flex';
+        }
+        
+        function enviarPagoDeuda(metodo) {
+            let cliente = document.getElementById('select-cliente-pago').value;
+            let monto = parseFloat(document.getElementById('input-monto-deuda').value);
+            if (!cliente || isNaN(monto) || monto <= 0) return alert("Completá los datos correctamente.");
+            setEstado('Registrando pago...', '#fff3e0', '#fbbc05');
+            let datos = { accion: 'registrarPagoDeuda', pago: { cliente: cliente, monto: monto, metodo: metodo, numeroTicket: Date.now().toString().slice(-6) } };
+            fetch(API_URL, { method: 'POST', body: JSON.stringify(datos) }).then(r => r.json()).then(d => {
+                if(d.status === 'success') { cerrarModal('modal-pagar-deuda'); setEstado('¡Pago Registrado!', '#e6f4ea', '#137333'); obtenerDatosDeSheets(); }
+            });
+        }
+
+        /* ----- MOVIMIENTOS DE CAJA (INGRESO / RETIRO) ----- */
+        function abrirModalMovimiento() { 
+            document.getElementById('mov-motivo').value = ''; 
+            document.getElementById('mov-monto').value = ''; 
+            document.getElementById('mov-tipo').value = 'Retiro';
+            cambiarColorMovimiento();
+            document.getElementById('modal-movimiento').style.display = 'flex'; 
+        }
+
+        function cambiarColorMovimiento() {
+            let tipo = document.getElementById('mov-tipo').value;
+            let btn = document.getElementById('btn-guardar-mov');
+            if (tipo === 'Retiro') {
+                btn.style.backgroundColor = '#d32f2f'; // Rojo para salida
+            } else {
+                btn.style.backgroundColor = '#137333'; // Verde para entrada
+            }
+        }
+
+        function procesarMovimiento() {
+            let tipo = document.getElementById('mov-tipo').value;
+            let motivo = document.getElementById('mov-motivo').value; 
+            let monto = parseFloat(document.getElementById('mov-monto').value); 
+            let metodo = document.getElementById('mov-metodo').value;
+            
+            if(!motivo || isNaN(monto) || monto <= 0) return alert("Completá todos los campos.");
+            setEstado('Registrando movimiento...', '#fff3e0', '#fbbc05');
+            
+            fetch(API_URL, {
+                method:'POST', 
+                body:JSON.stringify({
+                    accion:'registrarMovimientoCaja', 
+                    movimiento: {tipo: tipo, motivo: motivo, monto: monto, metodo: metodo}
+                })
+            }).then(r=>r.json()).then(d=>{
+                if(d.status==='success'){ cerrarModal('modal-movimiento'); setEstado('Movimiento Registrado', '#e6f4ea', '#137333'); }
+            });
+        }
+
+        /* ----- INGRESOS / COMPRAS ----- */
+        function abrirModalCompra() {
+            itemsCompraTemporal = []; 
+            document.getElementById('compra-prov').value = ''; 
+            document.getElementById('compra-factura').value = '';
+            document.getElementById('compra-total').value = '0.00';
+            actualizarTablaCompras(); 
+            document.getElementById('modal-compra').style.display = 'flex'; 
+            document.getElementById('input-buscador-compra').focus();
+        }
+
+        document.getElementById('input-buscador-compra').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault(); let cod = this.value.trim(); if(!cod) return;
+                let prod = catalogoProductos.find(p => p.codigo === cod);
+                if(prod) {
+                    productoEnFoco = prod;
+                    document.getElementById('ingreso-stock-titulo').innerText = "Ingreso de: " + prod.nombre;
+                    document.getElementById('ingreso-stock-cant').value = '';
+                    document.getElementById('ingreso-stock-costo').value = prod.precioCosto || 0;
+                    document.getElementById('modal-ingreso-stock').style.display = 'flex';
+                    document.getElementById('ingreso-stock-cant').focus();
+                } else {
+                    document.getElementById('nuevo-prod-cod').value = cod; 
+                    document.getElementById('nuevo-prod-nom').value = ''; 
+                    document.getElementById('nuevo-prod-costo').value = '';
+                    document.getElementById('nuevo-prod-cant').value = ''; 
+                    document.getElementById('nuevo-prod-venta').value = '0.00';
+                    actualizarMaestroCategorias();
+                    document.getElementById('modal-nuevo-prod').style.display = 'flex'; 
+                    document.getElementById('nuevo-prod-nom').focus();
+                }
+                this.value = ''; 
+            }
+        });
+
+        function confirmarIngresoStock() {
+            let cant = parseFloat(document.getElementById('ingreso-stock-cant').value);
+            let costo = parseFloat(document.getElementById('ingreso-stock-costo').value);
+            if(isNaN(cant) || cant <= 0) return alert("Ingrese cantidad válida.");
+            itemsCompraTemporal.push({ codigo: productoEnFoco.codigo, nombre: productoEnFoco.nombre, cantidad: cant, costo: costo, nuevo: false });
+            cerrarModal('modal-ingreso-stock'); actualizarTablaCompras(); document.getElementById('input-buscador-compra').focus();
+        }
+
+        function calcularPrecioVentaModal() {
+            let costo = parseFloat(document.getElementById('nuevo-prod-costo').value) || 0; let margen = parseFloat(document.getElementById('nuevo-prod-margen').value) || 0;
+            if(margen < 100) document.getElementById('nuevo-prod-venta').value = (costo / (1 - (margen / 100))).toFixed(2);
+        }
+
+        function agregarNuevoProductoACompra() {
+            let cod = document.getElementById('nuevo-prod-cod').value; 
+            let nom = document.getElementById('nuevo-prod-nom').value;
+            let cat = document.getElementById('nuevo-prod-cat').value || "General";
+            let costo = parseFloat(document.getElementById('nuevo-prod-costo').value) || 0; 
+            let margen = parseFloat(document.getElementById('nuevo-prod-margen').value) || 0; 
+            let cant = parseFloat(document.getElementById('nuevo-prod-cant').value) || 0;
+            if(!nom || cant <= 0) return alert("El nombre y la cantidad son obligatorios.");
+            itemsCompraTemporal.push({ codigo: cod, nombre: nom, categoria: cat, costo: costo, margen: (margen/100), cantidad: cant, nuevo: true });
+            cerrarModal('modal-nuevo-prod'); actualizarTablaCompras(); document.getElementById('input-buscador-compra').focus();
+        }
+
+        function actualizarTablaCompras() {
+            let body = document.getElementById('lista-items-compra'); body.innerHTML = '';
+            let sumaTotalFactura = 0;
+            
+            itemsCompraTemporal.forEach((it, i) => {
+                let subtotalItem = it.cantidad * it.costo;
+                sumaTotalFactura += subtotalItem;
+                let badge = it.nuevo ? '<span style="font-size:0.7rem; background:#137333; color:white; padding:2px 4px; border-radius:3px;">NUEVO</span>' : '';
+                body.innerHTML += `<tr><td>${it.nombre} ${badge}</td><td style="font-weight:bold;">+${it.cantidad}</td><td>$${it.costo.toLocaleString('es-AR')}</td><td><button onclick="itemsCompraTemporal.splice(${i},1); actualizarTablaCompras()" style="background:#fce8e6; border:none; color:red; cursor:pointer;">X</button></td></tr>`;
+            });
+
+            document.getElementById('compra-total').value = sumaTotalFactura.toFixed(2);
+        }
+
+        function guardarCompra() {
+            let prov = document.getElementById('compra-prov').value || "Varios"; 
+            let factura = document.getElementById('compra-factura').value || "";
+            let total = parseFloat(document.getElementById('compra-total').value); 
+            let metodo = document.getElementById('compra-metodo').value;
+            
+            if(isNaN(total) || total < 0) return alert("Ingresá el monto de la factura.");
+            if(itemsCompraTemporal.length === 0) return alert("No hay items cargados en la factura.");
+
+            setEstado('Procesando compra...', '#fff3e0', '#fbbc05');
+            fetch(API_URL, {
+                method: 'POST', 
+                body: JSON.stringify({
+                    accion: 'registrarCompra', 
+                    compra: { proveedor: prov, numeroFactura: factura, total: total, metodo: metodo, detalle: itemsCompraTemporal }
+                })
+            }).then(r=>r.json()).then(d=>{
+                if(d.status==='success'){ cerrarModal('modal-compra'); setEstado('¡Stock y Costos actualizados!', '#e6f4ea', '#137333'); obtenerDatosDeSheets(); }
+            });
+        }
+
+        /* ----- CIERRE DE CAJA ----- */
+        function abrirModalCierre() {
+            setEstado('Calculando...', '#fff3e0', '#fbbc05');
+            fetch(`${API_URL}?accion=obtenerCierreCaja`).then(r => r.json()).then(data => {
+                datosCierreActual = data; 
+                document.getElementById('cierre-fondo-efe').innerText = '$' + parseFloat(data.fondoInicialEfe || 0).toLocaleString('es-AR', {minimumFractionDigits: 2});
+                document.getElementById('cierre-fondo-mp').innerText = '$' + parseFloat(data.fondoInicialMp || 0).toLocaleString('es-AR', {minimumFractionDigits: 2});
+                
+                document.getElementById('cierre-ventas-efe').innerText = '$' + parseFloat(data.ventasEfectivo).toLocaleString('es-AR');
+                // Mostrar ingresos
+                document.getElementById('cierre-ingresos-efe').innerText = '+$' + parseFloat(data.ingresosEfectivo || 0).toLocaleString('es-AR', {minimumFractionDigits: 2});
+                document.getElementById('cierre-retiros-efe').innerText = '-$' + parseFloat(data.retirosEfectivo || 0).toLocaleString('es-AR', {minimumFractionDigits: 2});
+                document.getElementById('cierre-compras-efe').innerText = '-$' + parseFloat(data.comprasEfectivo || 0).toLocaleString('es-AR', {minimumFractionDigits: 2});
+                document.getElementById('cierre-efe-total').innerText = '$' + parseFloat(data.efectivoEnCaja).toLocaleString('es-AR', {minimumFractionDigits: 2});
+                
+                document.getElementById('cierre-ventas-mp').innerText = '$' + parseFloat(data.ventasMp || 0).toLocaleString('es-AR', {minimumFractionDigits: 2});
+                // Mostrar ingresos MP
+                document.getElementById('cierre-ingresos-mp').innerText = '+$' + parseFloat(data.ingresosMp || 0).toLocaleString('es-AR', {minimumFractionDigits: 2});
+                document.getElementById('cierre-retiros-mp').innerText = '-$' + parseFloat(data.retirosMp || 0).toLocaleString('es-AR', {minimumFractionDigits: 2});
+                document.getElementById('cierre-compras-mp').innerText = '-$' + parseFloat(data.comprasMp || 0).toLocaleString('es-AR', {minimumFractionDigits: 2});
+                document.getElementById('cierre-mp').innerText = '$' + parseFloat(data.mp).toLocaleString('es-AR', {minimumFractionDigits: 2});
+
+                document.getElementById('cierre-fiado').innerText = '$' + parseFloat(data.fiado).toLocaleString('es-AR');
+                document.getElementById('cierre-total').innerText = '$' + parseFloat(data.totalReal).toLocaleString('es-AR', {minimumFractionDigits: 2});
+                
+                setEstado(`Listo`, '#e6f4ea', '#137333'); 
+                document.getElementById('modal-cierre').style.display = 'flex';
+            });
+        }
+        
+        function guardarCierreEnPlanilla() {
+            if (!confirm("¿Guardar Cierre definitivo?")) return;
+            fetch(API_URL, {method:'POST', body:JSON.stringify({accion:'registrarCierre', cierre:datosCierreActual})}).then(()=>{cerrarModal('modal-cierre'); setEstado('Cierre Guardado', '#e6f4ea','#137333')});
+        }
+        
+        document.addEventListener('click', function(e) { let mod = document.querySelectorAll('.overlay[style="display: flex;"]'); if (e.target.tagName !== 'BUTTON' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'SELECT' && mod.length === 0) inputBuscador.focus(); });
+    </script>
+</body>
+</html>

@@ -124,7 +124,8 @@
             </div>
             <div class="seccion-cobro">
                 <div class="metodos-pago">
-                    <button class="btn-pago btn-efectivo" onclick="prepararCobroUnico('Efectivo')" id="btn-efectivo" disabled>EFECTIVO</button>
+                    <!-- ACÁ SE MODIFICÓ EL BOTÓN EFECTIVO PARA QUE ABRA LA CALCULADORA -->
+                    <button class="btn-pago btn-efectivo" onclick="abrirModalEfectivo()" id="btn-efectivo" disabled>EFECTIVO</button>
                     <button class="btn-pago btn-mp" onclick="prepararCobroUnico('MP')" id="btn-mp" disabled>TRANSF. / MP</button>
                     <button class="btn-pago btn-mixto" onclick="abrirModalMixto()" id="btn-mixto" disabled>PAGO DIVIDIDO</button>
                     <button class="btn-pago btn-descuento" onclick="abrirModalDescuento()" id="btn-descuento" disabled>🏷️ DESCUENTO</button>
@@ -134,7 +135,34 @@
         </div>
     </div>
 
-    <!-- Modales de Venta -->
+    <!-- NUEVO MODAL: CALCULADORA DE VUELTO (EFECTIVO) -->
+    <div class="overlay" id="modal-cobro-efectivo">
+        <div class="modal">
+            <h2 style="color: #137333; margin-bottom: 5px;">Cobro en Efectivo</h2>
+            <div style="font-size: 1.3rem; margin-bottom: 15px; color: #3c4043;">
+                Total a Cobrar: <strong style="font-size: 1.6rem; color: #202124;">$<span id="efectivo-total-cobrar">0.00</span></strong>
+            </div>
+            
+            <div class="grupo-input">
+                <label style="font-size: 1.1rem; color: #34a853;">¿Con cuánto abona el cliente?</label>
+                <div style="display:flex; align-items:center; gap:5px;">
+                    <span style="font-size:2.5rem; color:#34a853; font-weight:bold;">$</span>
+                    <input type="number" id="input-abona-con" class="input-dinero" style="width:100%; font-size: 2.5rem; font-weight: bold; height: 60px;" placeholder="Ej: 10000" oninput="calcularVuelto()" onkeypress="if(event.key === 'Enter') confirmarCobroEfectivo()">
+                </div>
+            </div>
+            
+            <div style="font-size: 1.8rem; margin-top: 20px; padding: 15px; background: #f8fbff; border: 2px solid #a4c2f4; border-radius: 8px;">
+                Vuelto: <strong id="efectivo-vuelto" style="color: #1a73e8; font-size: 2.2rem;">$0.00</strong>
+            </div>
+            
+            <div class="acciones-modal">
+                <button class="btn-modal btn-cancelar" onclick="cerrarModal('modal-cobro-efectivo')">Cancelar</button>
+                <button class="btn-modal" style="background-color: #34a853; font-size: 1.3rem;" onclick="confirmarCobroEfectivo()">✔ Confirmar Cobro</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resto de los modales (Búsqueda, Clientes, Descuento, etc.) -->
     <div class="overlay" id="modal-busqueda">
         <div class="modal">
             <h2>Resultados de Búsqueda</h2>
@@ -439,12 +467,10 @@
             actualizarVistaTicket(); 
         }
 
-        // NUEVA FUNCIÓN: Cambiar Precio Unitario a mano
         function cambiarPrecio(index, val) {
             let nPrecio = parseFloat(val);
-            // Si le borran el precio y queda en blanco, no hacemos nada hasta que pongan un número válido
             if (isNaN(nPrecio) || nPrecio < 0) {
-                nPrecio = ticketActual[index].precioUnitario; // restaura si está mal
+                nPrecio = ticketActual[index].precioUnitario; 
             }
             ticketActual[index].precioUnitario = nPrecio;
             ticketActual[index].total = ticketActual[index].cantidad * nPrecio;
@@ -453,7 +479,6 @@
 
         function quitarDelTicket(index) { ticketActual.splice(index, 1); actualizarVistaTicket(); }
 
-        // ACTUALIZADA: Ahora muestra un Input para el Precio Unitario
         function actualizarVistaTicket() {
             let lista = document.getElementById('lista-ticket'); lista.innerHTML = ''; subtotalTicket = 0;
             ticketActual.forEach((item, index) => {
@@ -486,6 +511,54 @@
             });
         }
         function prepararCobroUnico(t) { let p = {efectivo:0, mp:0, fiado:0}; if(t==='Efectivo') p.efectivo=totalTicket; else p.mp=totalTicket; enviarVentaAlMotor(p, ""); }
+
+        /* ----- NUEVO: CALCULADORA DE VUELTO (EFECTIVO) ----- */
+        function abrirModalEfectivo() {
+            document.getElementById('efectivo-total-cobrar').innerText = totalTicket.toLocaleString('es-AR', {minimumFractionDigits: 2});
+            let inputAbona = document.getElementById('input-abona-con');
+            inputAbona.value = ''; // Lo iniciamos vacío por si pagan exacto
+            
+            let vueltoSpan = document.getElementById('efectivo-vuelto');
+            vueltoSpan.innerText = '$0.00';
+            vueltoSpan.style.color = '#1a73e8';
+            
+            document.getElementById('modal-cobro-efectivo').style.display = 'flex';
+            inputAbona.focus();
+        }
+
+        function calcularVuelto() {
+            let abona = parseFloat(document.getElementById('input-abona-con').value) || 0;
+            let vuelto = abona - totalTicket;
+            let vueltoSpan = document.getElementById('efectivo-vuelto');
+            
+            if (vuelto < 0) {
+                // Si el cliente está dando menos plata de la que debe
+                vueltoSpan.innerText = 'Faltan $' + Math.abs(vuelto).toLocaleString('es-AR', {minimumFractionDigits: 2});
+                vueltoSpan.style.color = '#d32f2f'; // Rojo
+            } else {
+                vueltoSpan.innerText = '$' + vuelto.toLocaleString('es-AR', {minimumFractionDigits: 2});
+                vueltoSpan.style.color = '#1a73e8'; // Azul
+            }
+        }
+
+        function confirmarCobroEfectivo() {
+            let inputVal = document.getElementById('input-abona-con').value;
+            let abona = parseFloat(inputVal);
+            
+            // Si el cajero deja el input vacío y aprieta Enter/Confirmar, asumimos que pagó justo
+            if (inputVal === '' || isNaN(abona)) {
+                abona = totalTicket;
+            }
+            
+            if (abona < totalTicket) {
+                return alert("El cliente está entregando menos dinero del total a cobrar.");
+            }
+            
+            cerrarModal('modal-cobro-efectivo');
+            // Como es pago único en efectivo, lo mandamos directo al motor
+            enviarVentaAlMotor({ efectivo: totalTicket, mp: 0, fiado: 0 }, "");
+        }
+        /* --------------------------------------------------- */
 
         /* ----- MODALES Y LIBRETA (FIADO) ----- */
         function cerrarModal(id) { document.getElementById(id).style.display = 'none'; inputBuscador.focus(); }
